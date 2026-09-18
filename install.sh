@@ -35,10 +35,39 @@ raise SystemExit(f"release asset not found: {name}")
 PY
 }
 
+download_asset() {
+  local name="$1" dest="$2" url
+  url="$(asset_url "$name" 2>/dev/null || true)"
+  if [ -n "$url" ]; then
+    curl -fL "$url" -o "$dest"
+  else
+    curl -fL "https://media.githubusercontent.com/media/$REPO/main/assets/$name" -o "$dest"
+  fi
+}
+
+download_parts() {
+  local prefix="$1" count="$2" dest="$3" i name url
+  : > "$dest"
+  for ((i=0; i<count; i++)); do
+    name="${prefix}$(printf '%02d' "$i")"
+    url="$(asset_url "$name" 2>/dev/null || true)"
+    [ -n "$url" ] || url="https://media.githubusercontent.com/media/$REPO/main/assets/$name"
+    curl -fL "$url" >> "$dest"
+  done
+}
+
 runner_name="SWG-Proton-1-test1.tar.xz"
 webview_name="WebView2-Fixed-151.0.4129.107-x64.zip"
-curl -fL "$(asset_url "$runner_name")" -o "$TMP/$runner_name"
-curl -fL "$(asset_url "$webview_name")" -o "$TMP/$webview_name"
+if asset_url "$runner_name" >/dev/null 2>&1; then
+  download_asset "$runner_name" "$TMP/$runner_name"
+else
+  download_parts "runner.part." 6 "$TMP/$runner_name"
+fi
+if asset_url "$webview_name" >/dev/null 2>&1; then
+  download_asset "$webview_name" "$TMP/$webview_name"
+else
+  download_parts "webview.part." 6 "$TMP/$webview_name"
+fi
 curl -fsSL "https://raw.githubusercontent.com/$REPO/main/install-deck.sh" \
   -o "$TMP/install-deck.sh"
 chmod +x "$TMP/install-deck.sh"
