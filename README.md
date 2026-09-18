@@ -1,39 +1,36 @@
 # SWG Infinity Proton
 
-An unofficial Proton compatibility build and Steam Deck launcher for SWG
-Infinity. The Wine patch fixes the Infinity Launcher crash in
-`ole32!RevokeDragDrop`; the wrapper supplies the fixed WebView2 runtime and
-X11 environment required on SteamOS.
+An unofficial Proton compatibility build and Steam Deck installer for the
+current SWG Infinity Launcher. It fixes the launcher crash in
+`ole32!RevokeDragDrop` and supplies the fixed WebView2 runtime required on
+SteamOS. Lutris is not used.
 
 ## Install
 
 In Desktop Mode, open Konsole and run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Einharr/SWG-infinity-proton/main/install.sh \
-  | bash -s -- 11
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Einharr/SWG-infinity-proton/main/install.sh)"
 ```
 
-Replace `11` with the numeric Lutris game ID. The script downloads the latest
-release assets, installs the custom runner, installs WebView2, updates the
-Lutris YAML, and creates `~/.local/bin/swg-infinity-deck`.
+The installer downloads the official Infinity Launcher, installs it into a
+dedicated Steam Proton prefix, installs `SWG-Proton` and WebView2, creates the
+`SWG Infinity` Non-Steam shortcut, and assigns the custom compatibility tool.
+Steam opens the official setup once; complete it, close the setup window, and
+press Enter in Konsole. The script then changes the same shortcut from the
+setup executable to the installed launcher. Keep the default installation
+location offered by the setup.
 
-To find the ID through the desktop UI, open Dolphin, press `Ctrl+L`, and open:
+Open the new shortcut and let Infinity Launcher download the game data. No
+Lutris game or Lutris ID is required.
 
-```text
-~/.var/app/net.lutris.Lutris/config/lutris/games
-```
-
-Find the SWG YAML file, for example `swg-11.yml`; the number is the Lutris
-game ID. From Konsole, the same directory can be listed with:
+If several Steam accounts are configured on the Deck, set the target account
+explicitly:
 
 ```bash
-find ~/.var/app/net.lutris.Lutris/config/lutris/games \
-  -maxdepth 1 -type f -iname '*swg*.yml' -print
+STEAM_USER_ID=12345678 \
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/Einharr/SWG-infinity-proton/main/install.sh)"
 ```
-
-Add that launcher to Steam as a Non-Steam Game. Do not select another Proton
-version for the shortcut; it launches through Lutris.
 
 ## Build
 
@@ -44,12 +41,12 @@ disk space.
 bash ./build.sh
 ```
 
-The build pins the dwproton and Wine commits, applies the patch in
-`patches/`, and writes the runner archive to `dist/`. Release binaries are
-published as GitHub Release assets, not committed to the repository.
+The build pins the dwproton and Wine commits, applies the patch in `patches/`,
+and writes the runner archive to `dist/`. Release binaries are published as
+GitHub Release assets.
 
 ## License
 
-The scripts and patch are MIT-licensed. The Proton runner and its bundled
-components remain under their respective upstream licenses; see the files
-inside the release archive and `THIRD-PARTY-NOTICES.md`.
+The scripts and patch are MIT-licensed. The Proton runner, WebView2, and their
+bundled components remain under their respective upstream licenses; see
+`THIRD-PARTY-NOTICES.md`.

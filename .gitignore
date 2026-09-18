@@ -1,5 +1,8 @@
 dist/
 *.tar.xz
 *.zip
+*.exe
 *.sha256
 .cache/
+.tmp-*
+__pycache__/

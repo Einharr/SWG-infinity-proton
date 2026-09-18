@@ -3,32 +3,22 @@ set -euo pipefail
 
 readonly REPO="${SWG_PROTON_REPO:-Einharr/SWG-infinity-proton}"
 readonly API="https://api.github.com/repos/$REPO/releases/latest"
+readonly RUNNER_SHA256="7e0b47f9ab773b693b255748366c1c2fd41a8f9b1662962f8210c86d7c12eae0"
+readonly WEBVIEW_SHA256="7e6369c3341f941ccc062d2322f4f5afe43dbf5bb61a456765656afe65b14f1a"
 readonly TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-GAME_ID="${1:-}"
-if [ -z "$GAME_ID" ]; then
-  mapfile -t configs < <(find "$HOME/.var/app/net.lutris.Lutris/config/lutris/games" \
-    -maxdepth 1 -type f -iname '*swg*.yml' -print 2>/dev/null || true)
-  if [ "${#configs[@]}" -ne 1 ]; then
-    echo "Usage: $0 LUTRIS_GAME_ID" >&2
-    echo "Could not determine a unique SWG Lutris game. Matching YAML files:" >&2
-    printf '  %s\n' "${configs[@]}" >&2
-    exit 2
-  fi
-  GAME_ID="$(basename "${configs[0]}" | sed -E 's/^[^0-9]*([0-9]+).*$/\1/')"
-fi
-case "$GAME_ID" in (*[!0-9]*|'') echo "LUTRIS_GAME_ID must be numeric" >&2; exit 2;; esac
-
 command -v curl >/dev/null
 command -v python3 >/dev/null
+command -v sha256sum >/dev/null
+
 json="$(curl -fsSL "$API")"
 asset_url() {
   python3 - "$1" "$json" <<'PY'
 import json, sys
 name, raw = sys.argv[1], sys.argv[2]
 for asset in json.loads(raw).get("assets", []):
-    if asset.get("name") == name:
+    if asset.get("name") == name and asset.get("state") == "uploaded":
         print(asset["browser_download_url"])
         raise SystemExit
 raise SystemExit(f"release asset not found: {name}")
@@ -36,23 +26,16 @@ PY
 }
 
 download_asset() {
-  local name="$1" dest="$2" url
-  url="$(asset_url "$name" 2>/dev/null || true)"
-  if [ -n "$url" ]; then
-    curl -fL "$url" -o "$dest"
-  else
-    curl -fL "https://media.githubusercontent.com/media/$REPO/main/assets/$name" -o "$dest"
-  fi
+  local name="$1" dest="$2"
+  curl -fL "$(asset_url "$name")" -o "$dest"
 }
 
 download_parts() {
-  local prefix="$1" count="$2" dest="$3" i name url
+  local prefix="$1" count="$2" dest="$3" i name
   : > "$dest"
   for ((i=0; i<count; i++)); do
     name="${prefix}$(printf '%02d' "$i")"
-    url="$(asset_url "$name" 2>/dev/null || true)"
-    [ -n "$url" ] || url="https://media.githubusercontent.com/media/$REPO/main/assets/$name"
-    curl -fL "$url" >> "$dest"
+    curl -fL "$(asset_url "$name")" >> "$dest"
   done
 }
 
@@ -68,17 +51,17 @@ if asset_url "$webview_name" >/dev/null 2>&1; then
 else
   download_parts "webview.part." 6 "$TMP/$webview_name"
 fi
+
+printf '%s  %s\n' "$RUNNER_SHA256" "$TMP/$runner_name" | sha256sum -c -
+printf '%s  %s\n' "$WEBVIEW_SHA256" "$TMP/$webview_name" | sha256sum -c -
+
 curl -fsSL "https://raw.githubusercontent.com/$REPO/main/install-deck.sh" \
   -o "$TMP/install-deck.sh"
+curl -fsSL "https://raw.githubusercontent.com/$REPO/main/steam-shortcut.py" \
+  -o "$TMP/steam-shortcut.py"
 chmod +x "$TMP/install-deck.sh"
 
-yaml="$(find "$HOME/.var/app/net.lutris.Lutris/config/lutris/games" \
-  -maxdepth 1 -type f -iname "*swg*$GAME_ID*.yml" -print -quit 2>/dev/null || true)"
-if [ -z "$yaml" ]; then
-  yaml="$(find "$HOME/.var/app/net.lutris.Lutris/config/lutris/games" \
-    -maxdepth 1 -type f -iname "*$GAME_ID*.yml" -print -quit 2>/dev/null || true)"
-fi
-
-args=("$TMP/$runner_name" "$TMP/$webview_name" "$GAME_ID")
-[ -n "$yaml" ] && args+=("$yaml")
-bash "$TMP/install-deck.sh" "${args[@]}"
+bash "$TMP/install-deck.sh" \
+  "$TMP/$runner_name" \
+  "$TMP/$webview_name" \
+  "$TMP/steam-shortcut.py"
