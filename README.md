@@ -18,6 +18,20 @@ Replace `11` with the numeric Lutris game ID. The script downloads the latest
 release assets, installs the custom runner, installs WebView2, updates the
 Lutris YAML, and creates `~/.local/bin/swg-infinity-deck`.
 
+To find the ID through the desktop UI, open Dolphin, press `Ctrl+L`, and open:
+
+```text
+~/.var/app/net.lutris.Lutris/config/lutris/games
+```
+
+Find the SWG YAML file, for example `swg-11.yml`; the number is the Lutris
+game ID. From Konsole, the same directory can be listed with:
+
+```bash
+find ~/.var/app/net.lutris.Lutris/config/lutris/games \
+  -maxdepth 1 -type f -iname '*swg*.yml' -print
+```
+
 Add that launcher to Steam as a Non-Steam Game. Do not select another Proton
 version for the shortcut; it launches through Lutris.
 
