@@ -1,0 +1,5 @@
+dist/
+*.tar.xz
+*.zip
+*.sha256
+.cache/

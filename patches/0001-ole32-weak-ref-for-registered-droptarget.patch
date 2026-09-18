@@ -1,0 +1,80 @@
+Subject: [PATCH] ole32: do not hold a reference on the registered drop target
+
+RegisterDragDrop() takes a reference on the caller's IDropTarget and stores
+the pointer in the "OleDropTargetInterface" window prop; RevokeDragDrop()
+then dereferences that pointer and releases it.
+
+Windows does neither.  Verified statically against ole32.dll 10.0.26100.8875
+(Windows 11 build 26200):
+
+  * RegisterDragDrop stores the pointer with SetPropW and takes no reference
+    (the register path is "mov r8,rsi / call SetPropW", with no AddRef on
+    the caller-supplied interface anywhere in the function);
+
+  * RevokeDragDrop reads it back with GetPropW and only tests it against
+    NULL -- "call GetPropW / test rax,rax / je" and rax is never used
+    afterwards.  The Release calls in that function operate on an object
+    ole32 obtains internally, not on the stored pointer.
+
+So on Windows the prop is a weak, non-owning pointer.  Applications may
+therefore free their drop target before calling RevokeDragDrop, and some do
+-- ole2.c already acknowledges this in the DropTargetWrapper comment ("some
+apps destroy this prior to CoUninitialize without calling RevokeDragDrop").
+Under Wine the same sequence leaves the prop dangling and RevokeDragDrop
+faults reading the vtable:
+
+  RevokeDragDrop+0x58:  mov  rdx,[rax]     ; rax = GetPropW(...)
+                        mov  rcx,rax
+                        call [rdx+0x10]    ; IUnknown::Release
+
+Reproduced with a Tauri/WebView2 application (SWG Infinity's Infinity
+Launcher) on wine-11.16-staging-tkg-amd64-wow64: reliable crash during
+startup window teardown.  Faulting data addresses vary per run under ASLR
+but always land in freed heap.
+
+Drop the AddRef/Release pair so the prop matches Windows' weak-pointer
+semantics.  get_target_from_wrapper() is unaffected -- it takes its own
+temporary reference for the duration of each call, which remains correct
+while the prop is valid.
+
+Build integration verified against dwproton Wine commit
+299693a0002d839eac479514b4ef44de19bf73a9.  Runtime behaviour of the resulting
+complete custom runner still requires an end-to-end SWG Deck smoke test.
+
+---
+--- a/dlls/ole32/ole2.c
++++ b/dlls/ole32/ole2.c
+@@ -605,7 +605,11 @@
+     hr = create_map_from_stream(stream, &map);
+     if(SUCCEEDED(hr))
+     {
+-      IDropTarget_AddRef(pDropTarget);
++      /* Windows stores the caller's target in the prop without
++       * taking a reference, and never releases it in
++       * RevokeDragDrop.  Apps rely on that: some free their
++       * target before revoking, which is safe there.  Holding a
++       * ref here makes the prop dangle for those apps. */
+       SetPropW(hwnd, prop_oledroptarget, pDropTarget);
+       SetPropW(hwnd, prop_marshalleddroptarget, map);
+     }
+@@ -629,7 +633,6 @@
+ {
+   HANDLE map;
+   IStream *stream;
+-  IDropTarget *drop_target;
+   HRESULT hr;
+ 
+   TRACE("(%p)\n", hwnd);
+@@ -644,9 +647,9 @@
+   if (!(map = get_droptarget_handle(hwnd)))
+     return DRAGDROP_E_NOTREGISTERED;
+ 
+-  drop_target = GetPropW(hwnd, prop_oledroptarget);
+-  if(drop_target) IDropTarget_Release(drop_target);
+-
++  /* No reference was taken in RegisterDragDrop, so nothing to
++   * release here.  Dereferencing the stored pointer would fault
++   * for apps that already freed their target. */
+   RemovePropW(hwnd, prop_oledroptarget);
+   RemovePropW(hwnd, prop_marshalleddroptarget);
+ 
