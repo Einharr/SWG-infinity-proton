@@ -24,6 +24,10 @@ location offered by the setup.
 Open the new shortcut and let Infinity Launcher download the game data. No
 Lutris game or Lutris ID is required.
 
+If the launcher works in Desktop Mode but Gaming Mode shows a Gamescope
+`CreateSwapchainKHR` error or a black screen, follow
+[GAMING-MODE-TESTS.md](GAMING-MODE-TESTS.md).
+
 If several Steam accounts are configured on the Deck, set the target account
 explicitly:
 
