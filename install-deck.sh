@@ -83,7 +83,7 @@ test -n "$USERDATA_DIR"
 SHORTCUTS_VDF="$USERDATA_DIR/config/shortcuts.vdf"
 
 wine_webview="Z:$(printf '%s' "$WEBVIEW_DIR" | sed 's|/|\\|g')"
-launch_options="WAYLAND_DISPLAY= WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS= WEBVIEW2_BROWSER_EXECUTABLE_FOLDER=\"$wine_webview\" WINEDLLOVERRIDES=\"mscoree,mshtml=\" %command%"
+launch_options="ENABLE_GAMESCOPE_WSI=0 WAYLAND_DISPLAY= WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=\"--disable-gpu --disable-gpu-compositing --disable-features=Vulkan\" WEBVIEW2_BROWSER_EXECUTABLE_FOLDER=\"$wine_webview\" WINEDLLOVERRIDES=\"mscoree,mshtml=\" %command%"
 installer_options="WAYLAND_DISPLAY= %command% /D=C:\\SWGInfinity"
 
 python3 "$SHORTCUT_HELPER" \

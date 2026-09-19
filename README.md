@@ -15,7 +15,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Einharr/SWG-infinity-pro
 
 The installer downloads the official Infinity Launcher, installs it into a
 dedicated Steam Proton prefix, installs `SWG-Proton` and WebView2, creates the
-`SWG Infinity` Non-Steam shortcut, and assigns the custom compatibility tool.
+`SWG Infinity` Non-Steam shortcut, assigns the custom compatibility tool, and
+applies the confirmed Gamescope WSI workaround required in Gaming Mode.
 Steam opens the official setup once; complete it, close the setup window, and
 press Enter in Konsole. The script then changes the same shortcut from the
 setup executable to the installed launcher. Keep the default installation
