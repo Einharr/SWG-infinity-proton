@@ -29,6 +29,9 @@ If the launcher works in Desktop Mode but Gaming Mode shows a Gamescope
 `CreateSwapchainKHR` error or a black screen, follow
 [GAMING-MODE-TESTS.md](GAMING-MODE-TESTS.md).
 
+For a complete removal or a clean reinstall test, follow
+[UNINSTALL.md](UNINSTALL.md).
+
 If several Steam accounts are configured on the Deck, set the target account
 explicitly:
 
