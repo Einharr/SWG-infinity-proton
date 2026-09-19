@@ -15,6 +15,10 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Einharr/SWG-infinity-pro
 Complete the official setup at its default location, close it, then return to
 Konsole and press Enter. Start **SWG Infinity** from Gaming Mode.
 
+> [!NOTE]
+> The on-screen keyboard may not open in Desktop Mode. It works normally in
+> Gaming Mode.
+
 For a clean reinstall, see [UNINSTALL.md](UNINSTALL.md).
 
 ## How it works
