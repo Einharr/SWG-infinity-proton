@@ -1,8 +1,9 @@
 # SWG Infinity Proton
 
-Unofficial Steam Deck support for SWG Infinity. It provides a patched Proton
-build, the required WebView2 runtime, and a direct Steam installer. Lutris is
-not used.
+An unofficial Proton compatibility build and Steam Deck installer for the
+current SWG Infinity Launcher. It fixes the launcher crash in
+`ole32!RevokeDragDrop` and supplies the fixed WebView2 runtime required on
+SteamOS. Lutris is not used.
 
 ## Install
 
@@ -12,8 +13,17 @@ In Desktop Mode, open Konsole and run:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Einharr/SWG-infinity-proton/main/install.sh)"
 ```
 
-Complete the official setup at its default location, close it, then return to
-Konsole and press Enter. Start `SWG Infinity` from Gaming Mode.
+The installer downloads the official Infinity Launcher, installs it into a
+dedicated Steam Proton prefix, installs `SWG-Proton` and WebView2, creates the
+`SWG Infinity` Non-Steam shortcut, assigns the custom compatibility tool, and
+applies the confirmed Gamescope WSI workaround required in Gaming Mode.
+Steam opens the official setup once; complete it, close the setup window, and
+press Enter in Konsole. The script then changes the same shortcut from the
+setup executable to the installed launcher. Keep the default installation
+location offered by the setup.
+
+Open the new shortcut and let Infinity Launcher download the game data. No
+Lutris game or Lutris ID is required.
 
 For a complete removal or a clean reinstall test, follow
 [UNINSTALL.md](UNINSTALL.md).
@@ -28,23 +38,22 @@ STEAM_USER_ID=12345678 \
 
 ## Build
 
-Requirements: Linux or WSL2, Docker or Podman, Git, `tar`, `xz`, and sufficient
-disk space. The build is pinned to specific dwproton and Wine commits.
+Requirements: WSL2 or Linux, Docker/Podman, Git, `tar`, `xz`, and sufficient
+disk space.
 
 ```bash
 bash ./build.sh
 ```
 
-The patched runner and checksum are written to `dist/`.
+`build.sh` pins dwproton and Wine, applies the fix from `patches/`, and writes
+the runner, checksum, and build metadata to `dist/`.
 
-## Repository layout
-
-- `build.sh` and `patches/`: reproducible Proton build source.
-- `install.sh`: downloads and verifies the prebuilt GitHub Release assets.
-- `install-deck.sh`: installs Proton, WebView2, the launcher, and Steam shortcut.
-- `steam-shortcut.py`: updates Steam shortcut and compatibility configuration.
-- `UNINSTALL.md`: complete removal and clean reinstall.
-- GitHub Releases: prebuilt Proton and WebView2 binary parts used by `install.sh`.
+- Build inputs: `build.sh`, `patches/`, and `VERSION`.
+- Build output: `dist/SWG-Proton-1-test1.tar.xz` plus checksum and build info.
+- Prebuilt binaries: GitHub Release assets contain the runner and WebView2 in
+  split parts; `install.sh` downloads, reassembles, and verifies them.
+- Deck setup: `install-deck.sh` installs the binaries, while
+  `steam-shortcut.py` creates and configures the Steam shortcut.
 
 ## License
 
